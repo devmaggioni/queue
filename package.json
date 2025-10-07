@@ -1,0 +1,40 @@
+{
+  "type": "module",
+  "name": "@devmaggioni/queue",
+  "version": "1.0.0",
+  "description": "manages tasks in a queue with optional file persistence, FIFO support, and asynchronous execution with delay.",
+  "main": "index.js",
+  "files": [
+    "dist"
+  ],
+  "types": "node",
+  "scripts": {
+    "start": "node dist/index",
+    "dev": "tsx --watch src/index.ts",
+    "build": "tsc",
+    "nodemon": "nodemon"
+  },
+  "keywords": [
+    "queue",
+    "nodejs",
+    "ts",
+    "typescript",
+    "list",
+    "tasks"
+  ],
+  "author": "Gabriel Maggioni",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devmaggioni/queue.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "nodemon": "^3.1.10",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.2"
+  }
+}
