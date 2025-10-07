@@ -1,4 +1,2 @@
-import { FnQueue } from "./entities/fnQueue.js";
-import { Queue } from "./entities/Queue.js";
-
-export { FnQueue, Queue };
+export { FnQueue } from "./entities/fnQueue";
+export { Queue } from "./entities/Queue";

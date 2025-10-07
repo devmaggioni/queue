@@ -3,7 +3,7 @@
   "name": "@devmaggioni/queue",
   "version": "1.0.1",
   "description": "manages tasks in a queue with optional file persistence, FIFO support, and asynchronous execution with delay.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "files": [
     "dist"
   ],
