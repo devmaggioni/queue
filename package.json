@@ -7,7 +7,7 @@
   "files": [
     "dist"
   ],
-  "types": "node",
+  "types": "dist/index.d.ts",
   "scripts": {
     "start": "node dist/index",
     "dev": "tsx --watch src/index.ts",
