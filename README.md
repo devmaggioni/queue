@@ -1,154 +1,220 @@
-# 🗂 QUEUE
+# 🚀 @devmaggioni/queue
 
-Uma implementação completa de **filas em TypeScript**:
+Uma biblioteca TypeScript elegante e eficiente para gerenciamento de filas, com suporte para persistência em disco e execução de funções assíncronas.
 
-- `Queue`: fila de **tarefas genérica**, persistente em arquivo, com suporte a iteradores síncronos e assíncronos.
-- `FnQueue`: fila de **funções assíncronas em memória**, executando uma função por vez (FIFO), com delay opcional.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
----
+## ✨ Características
+
+- 🎯 **Duas implementações de fila**: `Queue` para dados e `FnQueue` para funções
+- 💾 **Persistência opcional**: Salve e carregue filas do disco
+- ⏱️ **Delay configurável**: Controle o tempo entre execuções
+- 🔄 **FIFO (First In, First Out)**: Ordem garantida de processamento
+- 🎭 **TypeScript nativo**: Tipagem completa e type-safe
+- 🚦 **Iteradores síncronos e assíncronos**: Flexibilidade no processamento
 
 ## 📦 Instalação
 
 ```bash
 npm install @devmaggioni/queue
-# ou
+```
+
+```bash
 yarn add @devmaggioni/queue
 ```
 
----
-
-## 📝 Queue
-
-### Descrição
-
-Fila de tarefas genérica, com persistência opcional em arquivo JSON.
-Permite adicionar, remover, limpar, iterar e executar tarefas com delay opcional.
-
-### Tipagem
-
-```ts
-type Task<T> = { taskId: string; task: T };
+```bash
+pnpm add @devmaggioni/queue
 ```
 
-### Construtor
+## 🎓 Uso
 
-```ts
-const queue = new Queue<string>({ delay: 500 });
+### FnQueue - Fila de Funções
+
+Ideal para executar funções assíncronas em sequência:
+
+```typescript
+import { FnQueue, processQueue } from "@devmaggioni/queue";
+
+// Criar fila com delay opcional de 1 segundo
+const fnQueue = new FnQueue({ delay: 1000 });
+
+// Adicionar funções à fila
+fnQueue.add([
+  "task1",
+  async () => {
+    console.log("Executando tarefa 1");
+    return { resultado: "sucesso" };
+  },
+]);
+
+fnQueue.add([
+  "task2",
+  async () => {
+    console.log("Executando tarefa 2");
+    return { resultado: "completo" };
+  },
+]);
+
+// Executar todas as funções
+const resultados = await fnQueue.runAll();
+console.log(resultados);
+
+// Ou processar uma por uma
+while (fnQueue.list.size > 0) {
+  const resultado = await fnQueue.next();
+  console.log(resultado);
+}
 ```
 
-- `options.delay`: Delay em milissegundos entre execuções no `runAsync`. Opcional.
+### Queue - Fila de Dados com Persistência
 
-### Métodos
+Perfeita para gerenciar tarefas com persistência em disco:
 
-| Método                | Descrição                                                                  |
-| --------------------- | -------------------------------------------------------------------------- |
-| `load(path: string)`  | Carrega tarefas de um arquivo JSON. Retorna `Map<string, T>`.              |
-| `add([taskId, task])` | Adiciona uma tarefa. Retorna `true` se adicionada, `false` se já existir.  |
-| `del(taskId)`         | Remove tarefa pelo ID. Retorna `true` se removida, `false` caso contrário. |
-| `clear()`             | Remove todas as tarefas.                                                   |
-| `get(taskId)`         | Retorna a tarefa pelo ID.                                                  |
-| `getAll()`            | Retorna todas as tarefas.                                                  |
-| `next()`              | Retorna e remove a próxima tarefa (FIFO). Retorna `false` se vazio.        |
-| `run()`               | Iterador síncrono sobre todas as tarefas.                                  |
-| `runAsync()`          | Iterador assíncrono com delay opcional.                                    |
+```typescript
+import { Queue, processQueue } from "@devmaggioni/queue";
 
-### Exemplo de uso
-
-```ts
-import { Queue } from "@devmaggioni/queue";
-
-async function main() {
-  const queue = new Queue<string>({ delay: 100 });
-
-  await queue.add(["task1", "Enviar email"]);
-  await queue.add(["task2", "Processar pedido"]);
-
-  for await (const { taskId, task } of queue.runAsync()) {
-    console.log(taskId, task);
-  }
-
-  const nextTask = await queue.next();
-  console.log("Próxima tarefa:", nextTask);
+interface MinhaTask {
+  nome: string;
+  dados: any;
 }
 
-main();
-```
+// Criar fila
+const queue = new Queue<MinhaTask>({ delay: 500 });
 
----
+// Carregar tarefas existentes do disco
+await queue.load("./tasks.json");
 
-## 🏃 FnQueue
+// Adicionar novas tarefas
+await queue.add([
+  "task1",
+  {
+    nome: "Processar pedido",
+    dados: { pedidoId: 123 },
+  },
+]);
 
-### Descrição
+await queue.add([
+  "task2",
+  {
+    nome: "Enviar email",
+    dados: { destinatario: "user@example.com" },
+  },
+]);
 
-Fila de funções assíncronas **em memória**, executando **uma de cada vez** (FIFO).
-Funções síncronas são automaticamente convertidas em assíncronas. Delay opcional entre execuções.
-
-### Construtor
-
-```ts
-const fnQueue = new FnQueue<number>({ delay: 500 });
-```
-
-- `options.delay`: Delay entre execuções em milissegundos. Opcional.
-
-### Métodos
-
-| Método              | Descrição                                                                          |
-| ------------------- | ---------------------------------------------------------------------------------- |
-| `add([taskId, fn])` | Adiciona uma função à fila. Retorna `true` se adicionada, `false` se já existir.   |
-| `del(taskId)`       | Remove função pelo ID. Retorna `true` se removida, `false` caso contrário.         |
-| `clear()`           | Limpa todas as funções.                                                            |
-| `get(taskId)`       | Retorna função pelo ID.                                                            |
-| `getAll()`          | Retorna todas as funções da fila.                                                  |
-| `next()`            | Executa e remove a próxima função (FIFO). Retorna o resultado ou `false` se vazio. |
-| `runAll()`          | Executa **todas** as funções na fila em sequência. Retorna array com resultados.   |
-
-### Exemplo de uso
-
-```ts
-import { FnQueue } from "@devmaggioni/queue";
-
-async function main() {
-  const queue = new FnQueue<number>({ delay: 300 });
-
-  queue.add(["task1", () => 1]);
-  queue.add([
-    "task2",
-    async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      return 2;
-    },
-  ]);
-
-  const results = await queue.runAll();
-  console.log("Resultados:", results); // [1, 2]
+// Processar com iterador assíncrono
+for await (const { taskId, task } of queue.runAsync()) {
+  console.log(`Processando ${taskId}:`, task);
+  // Seu processamento aqui
 }
 
-main();
+// Limpar fila
+await queue.clear();
 ```
 
----
+### Função Helper: processQueue
 
-## ⚡ Características
+Simplifique o processamento com a função helper:
 
-- FIFO garantido em ambas as filas
-- Delay opcional entre execuções
-- Iteradores síncronos e assíncronos (`Queue`)
-- Execução em sequência de funções (`FnQueue`)
-- Tipagem genérica com TypeScript
-- Persistência opcional em arquivo (`Queue`)
-- Todas funções do `FnQueue` são convertidas em assíncronas automaticamente
+```typescript
+import { Queue, FnQueue, processQueue } from "@devmaggioni/queue";
 
----
+// Com FnQueue
+const fnQueue = new FnQueue();
+fnQueue.add(["task1", async () => ({ data: "resultado" })]);
 
-## 💡 Dicas
+await processQueue(fnQueue, (resultado) => {
+  console.log("Resultado:", resultado);
+});
 
-- Para `Queue`, prefira **FIFO** para processamento em ordem de chegada.
-- Para `FnQueue`, **não use funções com efeitos colaterais não tratados** dentro da fila sem await.
-- Use `options.delay` para simular processamento lento ou evitar sobrecarga de tarefas.
+// Com Queue
+const queue = new Queue();
+await queue.add(["task1", { info: "dados" }]);
 
----
+await processQueue(queue, ({ taskId, task }) => {
+  console.log(`Task ${taskId}:`, task);
+});
+```
+
+## 📚 API Reference
+
+### FnQueue
+
+#### Constructor
+
+```typescript
+new FnQueue<T>(options?: { delay?: number | null })
+```
+
+#### Métodos
+
+- `add(item: [string, Function]): boolean` - Adiciona função à fila
+- `del(taskId: string): boolean` - Remove função pelo ID
+- `clear(): void` - Limpa todas as funções
+- `get(taskId: string): Function | undefined` - Obtém função pelo ID
+- `next(): Promise<T | false>` - Executa próxima função
+- `runAll(): Promise<T[]>` - Executa todas as funções sequencialmente
+
+#### Propriedades
+
+- `list: Map<string, Function>` - Mapa de funções na fila
+
+### Queue
+
+#### Constructor
+
+```typescript
+new Queue<T>(options?: { delay?: number | null })
+```
+
+#### Métodos
+
+- `load(path: string): Promise<Map<string, T>>` - Carrega fila do disco
+- `add(item: [string, T]): Promise<boolean>` - Adiciona tarefa
+- `del(taskId: string): Promise<boolean>` - Remove tarefa
+- `clear(): Promise<void>` - Limpa todas as tarefas
+- `get(taskId: string): T | undefined` - Obtém tarefa pelo ID
+- `next(): Promise<T | false>` - Obtém próxima tarefa
+- `run(): Generator` - Iterador síncrono
+- `runAsync(): AsyncGenerator` - Iterador assíncrono com delay
+
+#### Propriedades
+
+- `list: Map<string, T>` - Mapa de tarefas na fila
+
+### processQueue
+
+```typescript
+// Para FnQueue
+processQueue<T>(q: FnQueue, fn: (data: T) => any): Promise<void>
+
+// Para Queue
+processQueue<T>(q: Queue, fn: (data: { taskId: string; task: T }) => any): Promise<void>
+```
+
+## 🎯 Casos de Uso
+
+- ✅ Processamento sequencial de tarefas
+- ✅ Gerenciamento de jobs assíncronos
+- ✅ Rate limiting de requisições API
+- ✅ Processamento em lote com delay
+- ✅ Sistema de tarefas persistentes
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests.
 
 ## 📄 Licença
 
-MIT License.
+MIT © [devmaggioni](https://github.com/devmaggioni)
+
+## 👤 Autor
+
+**devmaggioni**
+
+- GitHub: [@devmaggioni](https://github.com/devmaggioni)
+
+---
+
+Feito com ❤️ por devmaggioni
