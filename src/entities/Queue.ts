@@ -4,9 +4,9 @@ import { writeFile } from "../utils/writeFile.js";
 type Task<T> = { taskId: string; task: T };
 
 export class Queue<T = any> {
-  private list: Map<string, T> = new Map();
-  private path?: string;
-  private loaded: boolean = false;
+  #list: Map<string, T> = new Map();
+  #path?: string;
+  #loaded: boolean = false;
   private options: { delay?: number | null } | undefined;
 
   constructor(options?: { delay?: number | null }) {
@@ -17,10 +17,10 @@ export class Queue<T = any> {
   async load(path: string) {
     try {
       const arr: Task<T>[] = await readFile(path);
-      this.list = new Map(arr.map((item) => [item.taskId, item.task]));
-      this.path = path;
-      this.loaded = true;
-      return this.list;
+      this.#list = new Map(arr.map((item) => [item.taskId, item.task]));
+      this.#path = path;
+      this.#loaded = true;
+      return this.#list;
     } catch (e) {
       if (e instanceof Error) throw e;
       throw new Error(String(e));
@@ -30,15 +30,15 @@ export class Queue<T = any> {
   // Adiciona uma tarefa
   async add(item: [string, T]) {
     const [taskId, task] = item;
-    if (this.list.has(taskId)) return false;
+    if (this.#list.has(taskId)) return false;
 
-    this.list.set(taskId, task);
+    this.#list.set(taskId, task);
 
-    if (this.loaded && this.path) {
+    if (this.#loaded && this.#path) {
       try {
-        const arr: Task<T>[] = await readFile(this.path);
+        const arr: Task<T>[] = await readFile(this.#path);
         arr.push({ taskId, task });
-        await writeFile(this.path, arr);
+        await writeFile(this.#path, arr);
       } catch (e) {
         if (e instanceof Error) throw e;
         throw new Error(String(e));
@@ -50,16 +50,16 @@ export class Queue<T = any> {
 
   // Remove uma tarefa pelo ID
   async del(taskId: string) {
-    if (!this.list.has(taskId)) return false;
+    if (!this.#list.has(taskId)) return false;
 
-    this.list.delete(taskId);
+    this.#list.delete(taskId);
 
-    if (this.loaded && this.path) {
+    if (this.#loaded && this.#path) {
       try {
-        const arr: Task<T>[] = await readFile(this.path);
+        const arr: Task<T>[] = await readFile(this.#path);
         const index = arr.findIndex((item) => item.taskId === taskId);
         if (index !== -1) arr.splice(index, 1);
-        await writeFile(this.path, arr);
+        await writeFile(this.#path, arr);
       } catch (e) {
         if (e instanceof Error) throw e;
         throw new Error(String(e));
@@ -71,36 +71,36 @@ export class Queue<T = any> {
 
   // Limpa todas as tarefas
   async clear() {
-    this.list.clear();
-    if (this.loaded && this.path) {
-      await writeFile(this.path, []);
+    this.#list.clear();
+    if (this.#loaded && this.#path) {
+      await writeFile(this.#path, []);
     }
   }
 
   // Obtém uma tarefa pelo ID
   get(taskId: string) {
-    return this.list.get(taskId);
+    return this.#list.get(taskId);
   }
 
   // Obtém todas as tarefas
-  getAll() {
-    return this.list;
+  get list() {
+    return this.#list;
   }
 
   // Pega a próxima tarefa (FIFO)
   async next(): Promise<T | false> {
-    const firstKey = this.list.keys().next().value;
+    const firstKey = this.#list.keys().next().value;
     if (!firstKey) return false;
 
-    const value = this.list.get(firstKey)!;
-    this.list.delete(firstKey);
+    const value = this.#list.get(firstKey)!;
+    this.#list.delete(firstKey);
 
-    if (this.loaded && this.path) {
+    if (this.#loaded && this.#path) {
       try {
-        const arr: Task<T>[] = await readFile(this.path);
+        const arr: Task<T>[] = await readFile(this.#path);
         const index = arr.findIndex((item) => item.taskId === firstKey);
         if (index !== -1) arr.splice(index, 1);
-        await writeFile(this.path, arr);
+        await writeFile(this.#path, arr);
       } catch (e) {
         if (e instanceof Error) throw e;
         throw new Error(String(e));
@@ -112,14 +112,14 @@ export class Queue<T = any> {
 
   // Iterador síncrono
   *run() {
-    for (const [taskId, task] of this.list) {
+    for (const [taskId, task] of this.#list) {
       yield { taskId, task };
     }
   }
 
   // Iterador assíncrono com delay opcional
   async *runAsync() {
-    for (const [taskId, task] of this.list) {
+    for (const [taskId, task] of this.#list) {
       if (this.options?.delay) {
         await new Promise((r) => setTimeout(r, this.options!.delay!));
       }

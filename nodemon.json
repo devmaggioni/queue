@@ -2,5 +2,5 @@
   "watch": ["src"],
   "ext": "ts",
   "ignore": ["dist", "node_modules"],
-  "exec": "tsc && node dist/index.js"
+  "exec": "tsc && node dist/example.js"
 }

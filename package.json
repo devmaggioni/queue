@@ -12,7 +12,7 @@
     "start": "node dist/index",
     "dev": "tsx --watch src/index.ts",
     "build": "tsc",
-    "nodemon": "nodemon"
+    "example": "nodemon"
   },
   "keywords": [
     "queue",
