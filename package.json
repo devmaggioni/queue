@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@devmaggioni/queue",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "manages tasks in a queue with optional file persistence, FIFO support, and asynchronous execution with delay.",
   "main": "dist/index.js",
   "files": [
